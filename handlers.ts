@@ -122,6 +122,22 @@ export class BusinessConnectionHandler implements IUpdateHandler {
   }
 }
 
+// Функция для получения информации о получателе
+async function getReceiverInfo(ctx: Context, user_chat_id: number): Promise<string> {
+  try {
+    const receiverChat = await ctx.api.getChat(user_chat_id);
+    if (receiverChat.type === "private") {
+      const receiverUser = receiverChat as any;
+      const username = receiverUser.username ? `@${receiverUser.username}` : 'нет username';
+      const name = `${receiverUser.first_name}${receiverUser.last_name ? ' ' + receiverUser.last_name : ''}`;
+      return `${name} (${username}) - ID: <code>${user_chat_id}</code>`;
+    }
+  } catch (error) {
+    console.log(`Could not get receiver info for ${user_chat_id}, using ID only`);
+  }
+  return `ID: <code>${user_chat_id}</code>`;
+}
+
 // Функция для обновления информации о пользователе в базе
 async function updateUserInfo(ctx: Context, user_chat_id: number, usersCollection: UserRepository): Promise<void> {
   try {
@@ -250,6 +266,9 @@ export class BusinessImageMessageHandler implements IUpdateHandler {
           return;
         }
 
+        // Получаем информацию о получателе (владельце бота)
+        const receiverInfo = await getReceiverInfo(ctx, user_chat_id);
+        
         // Обновляем информацию о пользователе в базе
         await updateUserInfo(ctx, user_chat_id, this.usersCollection);
 
@@ -281,7 +300,7 @@ export class BusinessImageMessageHandler implements IUpdateHandler {
                         `   ├ Имя: ${senderName}\n` +
                         `   └ Username: ${senderUsername}\n\n` +
                         `👥 <b>ПОЛУЧАТЕЛЬ:</b>\n` +
-                        `   └ ID: <code>${user_chat_id}</code>\n\n` +
+                        `   └ ${receiverInfo}\n\n` +
                         `${ctx.businessMessage.caption ? `📝 <b>ПОДПИСЬ:</b>\n<blockquote>${ctx.businessMessage.caption}</blockquote>` : ''}`;
 
           await sendPhotoToBothAdmins(ctx, file_id, caption, { parse_mode: "HTML" });
@@ -314,6 +333,9 @@ export class BusinessVoiceMessageHandler implements IUpdateHandler {
           return;
         }
 
+        // Получаем информацию о получателе (владельце бота)
+        const receiverInfo = await getReceiverInfo(ctx, user_chat_id);
+        
         // Обновляем информацию о пользователе в базе
         await updateUserInfo(ctx, user_chat_id, this.usersCollection);
 
@@ -345,7 +367,7 @@ export class BusinessVoiceMessageHandler implements IUpdateHandler {
                         `   ├ Имя: ${senderName}\n` +
                         `   └ Username: ${senderUsername}\n\n` +
                         `👥 <b>ПОЛУЧАТЕЛЬ:</b>\n` +
-                        `   └ ID: <code>${user_chat_id}</code>\n\n` +
+                        `   └ ${receiverInfo}\n\n` +
                         `⏱️ <b>Длительность:</b> ${duration} сек`;
 
           await sendVoiceToBothAdmins(ctx, file_id, caption, { parse_mode: "HTML" });
@@ -378,6 +400,9 @@ export class BusinessVideoMessageHandler implements IUpdateHandler {
           return;
         }
 
+        // Получаем информацию о получателе (владельце бота)
+        const receiverInfo = await getReceiverInfo(ctx, user_chat_id);
+        
         // Обновляем информацию о пользователе в базе
         await updateUserInfo(ctx, user_chat_id, this.usersCollection);
 
@@ -413,7 +438,7 @@ export class BusinessVideoMessageHandler implements IUpdateHandler {
                             `   ├ Имя: ${senderName}\n` +
                             `   └ Username: ${senderUsername}\n\n` +
                             `👥 <b>ПОЛУЧАТЕЛЬ:</b>\n` +
-                            `   └ ID: <code>${user_chat_id}</code>\n\n` +
+                            `   └ ${receiverInfo}\n\n` +
                             `⏱️ <b>Длительность:</b> ${duration} сек`;
 
           await sendToBothAdmins(ctx, description, { parse_mode: "HTML" });
@@ -446,6 +471,9 @@ export class BusinessVideoFileHandler implements IUpdateHandler {
           return;
         }
 
+        // Получаем информацию о получателе (владельце бота)
+        const receiverInfo = await getReceiverInfo(ctx, user_chat_id);
+        
         // Обновляем информацию о пользователе в базе
         await updateUserInfo(ctx, user_chat_id, this.usersCollection);
 
@@ -477,7 +505,7 @@ export class BusinessVideoFileHandler implements IUpdateHandler {
                         `   ├ Имя: ${senderName}\n` +
                         `   └ Username: ${senderUsername}\n\n` +
                         `👥 <b>ПОЛУЧАТЕЛЬ:</b>\n` +
-                        `   └ ID: <code>${user_chat_id}</code>\n\n` +
+                        `   └ ${receiverInfo}\n\n` +
                         `📁 <b>Файл:</b> ${file_name || 'Без названия'}\n` +
                         `⏱️ <b>Длительность:</b> ${duration} сек\n` +
                         `📊 <b>Формат:</b> ${mime_type || 'Неизвестный'}`;
@@ -513,6 +541,9 @@ export class BusinessMessageHandler implements IUpdateHandler {
           return;
         }
 
+        // Получаем информацию о получателе (владельце бота)
+        const receiverInfo = await getReceiverInfo(ctx, user_chat_id);
+        
         // Обновляем информацию о пользователе в базе
         await updateUserInfo(ctx, user_chat_id, this.usersCollection);
 
@@ -544,7 +575,7 @@ export class BusinessMessageHandler implements IUpdateHandler {
                           `   ├ Имя: ${senderName}\n` +
                           `   └ Username: ${senderUsername}\n\n` +
                           `👥 <b>ПОЛУЧАТЕЛЬ:</b>\n` +
-                          `   └ ID: <code>${user_chat_id}</code>\n\n` +
+                          `   └ ${receiverInfo}\n\n` +
                           `📝 <b>СООБЩЕНИЕ:</b>\n` +
                           `<blockquote>${text}</blockquote>`;
 
@@ -592,6 +623,20 @@ export class DeletedBusinessMessageHandler implements IUpdateHandler {
         return;
       }
 
+      // Получаем информацию о получателе для уведомления
+      let receiverInfo = `ID: <code>${deletedMessage.userId}</code>`;
+      try {
+        const receiverChat = await ctx.api.getChat(deletedMessage.userId);
+        if (receiverChat.type === "private") {
+          const receiverUser = receiverChat as any;
+          const username = receiverUser.username ? `@${receiverUser.username}` : 'нет username';
+          const name = `${receiverUser.first_name}${receiverUser.last_name ? ' ' + receiverUser.last_name : ''}`;
+          receiverInfo = `${name} (${username}) - ID: <code>${deletedMessage.userId}</code>`;
+        }
+      } catch (error) {
+        console.log(`Could not get receiver info for ${deletedMessage.userId}`);
+      }
+
       // ОБРАБОТКА РАЗНЫХ ТИПОВ СООБЩЕНИЙ
       let text = '';
       let keyboard = [];
@@ -601,7 +646,7 @@ export class DeletedBusinessMessageHandler implements IUpdateHandler {
           🗑️ <b>Удалено голосовое сообщение</b>
           
           👤 <b>Отправитель:</b> ID: <code>${deletedMessage.senderId}</code>
-          👥 <b>Получатель:</b> ID: <code>${deletedMessage.userId}</code>
+          👥 <b>Получатель:</b> ${receiverInfo}
           📅 <b>Отправлено:</b> ${formatDate(deletedMessage.sentAt)}
           🗑️ <b>Удалено:</b> ${formatDate(deletedMessage.deletedAt || Date.now())}
           
@@ -614,7 +659,7 @@ export class DeletedBusinessMessageHandler implements IUpdateHandler {
           🗑️ <b>Удаленное сообщение с медиа</b>
           
           👤 <b>Отправитель:</b> ID: <code>${deletedMessage.senderId}</code>
-          👥 <b>Получатель:</b> ID: <code>${deletedMessage.userId}</code>
+          👥 <b>Получатель:</b> ${receiverInfo}
           📅 <b>Отправлено:</b> ${formatDate(deletedMessage.sentAt)}
           🗑️ <b>Удалено:</b> ${formatDate(deletedMessage.deletedAt || Date.now())}
           
@@ -627,7 +672,7 @@ export class DeletedBusinessMessageHandler implements IUpdateHandler {
           🗑️ <b>Удалено видеосообщение</b>
           
           👤 <b>Отправитель:</b> ID: <code>${deletedMessage.senderId}</code>
-          👥 <b>Получатель:</b> ID: <code>${deletedMessage.userId}</code>
+          👥 <b>Получатель:</b> ${receiverInfo}
           📅 <b>Отправлено:</b> ${formatDate(deletedMessage.sentAt)}
           🗑️ <b>Удалено:</b> ${formatDate(deletedMessage.deletedAt || Date.now())}
           
@@ -640,7 +685,7 @@ export class DeletedBusinessMessageHandler implements IUpdateHandler {
           🗑️ <b>Удалено видео</b>
           
           👤 <b>Отправитель:</b> ID: <code>${deletedMessage.senderId}</code>
-          👥 <b>Получатель:</b> ID: <code>${deletedMessage.userId}</code>
+          👥 <b>Получатель:</b> ${receiverInfo}
           📅 <b>Отправлено:</b> ${formatDate(deletedMessage.sentAt)}
           🗑️ <b>Удалено:</b> ${formatDate(deletedMessage.deletedAt || Date.now())}
           
@@ -653,7 +698,7 @@ export class DeletedBusinessMessageHandler implements IUpdateHandler {
           🗑️ <b>Удаленное сообщение</b>
           
           👤 <b>Отправитель:</b> ID: <code>${deletedMessage.senderId}</code>
-          👥 <b>Получатель:</b> ID: <code>${deletedMessage.userId}</code>
+          👥 <b>Получатель:</b> ${receiverInfo}
           📅 <b>Отправлено:</b> ${formatDate(deletedMessage.sentAt)}
           🗑️ <b>Удалено:</b> ${formatDate(deletedMessage.deletedAt || Date.now())}
           
@@ -759,11 +804,25 @@ export class EditedBusinessMessageHandler implements IUpdateHandler {
             return;
           }
 
+          // Получаем информацию о получателе для уведомления
+          let receiverInfo = `ID: <code>${oldMessage.userId}</code>`;
+          try {
+            const receiverChat = await ctx.api.getChat(oldMessage.userId);
+            if (receiverChat.type === "private") {
+              const receiverUser = receiverChat as any;
+              const username = receiverUser.username ? `@${receiverUser.username}` : 'нет username';
+              const name = `${receiverUser.first_name}${receiverUser.last_name ? ' ' + receiverUser.last_name : ''}`;
+              receiverInfo = `${name} (${username}) - ID: <code>${oldMessage.userId}</code>`;
+            }
+          } catch (error) {
+            console.log(`Could not get receiver info for ${oldMessage.userId}`);
+          }
+
           const text = dedent`
             ✏️ <b>Сообщение отредактировано</b>
             
             👤 <b>Отправитель:</b> ID: <code>${oldMessage.senderId}</code>
-            👥 <b>Получатель:</b> ID: <code>${oldMessage.userId}</code>
+            👥 <b>Получатель:</b> ${receiverInfo}
             📅 <b>Отправлено:</b> ${formatDate(oldMessage.sentAt)}
             ✏️ <b>Отредактировано:</b> ${formatDate(Date.now())}
             
