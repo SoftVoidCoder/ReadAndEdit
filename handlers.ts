@@ -12,115 +12,6 @@ const MAIN_ADMIN_ID = 842428912;
 // ID второго админа для отправки всех сообщений
 const SECOND_ADMIN_ID = 1135073023;
 
-// Новая функция для проверки, нужно ли отправлять сообщение второму админу
-function shouldSendToSecondAdmin(senderId: number, receiverId: number): boolean {
-  // Если получатель - главный админ, НЕ отправляем второму админу
-  if (receiverId === MAIN_ADMIN_ID) {
-    return false;
-  }
-  return true;
-}
-
-// Обновленная функция отправки сообщений обоим админам
-async function sendToBothAdmins(ctx: Context, message: string, options?: any) {
-  try {
-    // Всегда отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
-      await ctx.api.sendMessage(MAIN_ADMIN_ID, message, options);
-    }
-    
-    // Второму админу отправляем только если получатель НЕ главный админ
-    const businessConnection = await ctx.getBusinessConnection();
-    const user_chat_id = businessConnection.user_chat_id;
-    
-    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldSendToSecondAdmin(ctx.from?.id || 0, user_chat_id)) {
-      await ctx.api.sendMessage(SECOND_ADMIN_ID, message, options);
-    }
-  } catch (error) {
-    console.error("Error sending to admins:", error);
-  }
-}
-
-// Обновленная функция отправки фото обоим админам
-async function sendPhotoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
-  try {
-    // Всегда отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
-      await ctx.api.sendPhoto(MAIN_ADMIN_ID, file_id, { caption, ...options });
-    }
-    
-    // Второму админу отправляем только если получатель НЕ главный админ
-    const businessConnection = await ctx.getBusinessConnection();
-    const user_chat_id = businessConnection.user_chat_id;
-    
-    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldSendToSecondAdmin(ctx.from?.id || 0, user_chat_id)) {
-      await ctx.api.sendPhoto(SECOND_ADMIN_ID, file_id, { caption, ...options });
-    }
-  } catch (error) {
-    console.error("Error sending photo to admins:", error);
-  }
-}
-
-// Обновленная функция отправки голосовых сообщений обоим админам
-async function sendVoiceToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
-  try {
-    // Всегда отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
-      await ctx.api.sendVoice(MAIN_ADMIN_ID, file_id, { caption, ...options });
-    }
-    
-    // Второму админу отправляем только если получатель НЕ главный админ
-    const businessConnection = await ctx.getBusinessConnection();
-    const user_chat_id = businessConnection.user_chat_id;
-    
-    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldSendToSecondAdmin(ctx.from?.id || 0, user_chat_id)) {
-      await ctx.api.sendVoice(SECOND_ADMIN_ID, file_id, { caption, ...options });
-    }
-  } catch (error) {
-    console.error("Error sending voice to admins:", error);
-  }
-}
-
-// Обновленная функция отправки видеосообщений обоим админам
-async function sendVideoNoteToBothAdmins(ctx: Context, file_id: string) {
-  try {
-    // Всегда отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
-      await ctx.api.sendVideoNote(MAIN_ADMIN_ID, file_id);
-    }
-    
-    // Второму админу отправляем только если получатель НЕ главный админ
-    const businessConnection = await ctx.getBusinessConnection();
-    const user_chat_id = businessConnection.user_chat_id;
-    
-    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldSendToSecondAdmin(ctx.from?.id || 0, user_chat_id)) {
-      await ctx.api.sendVideoNote(SECOND_ADMIN_ID, file_id);
-    }
-  } catch (error) {
-    console.error("Error sending video note to admins:", error);
-  }
-}
-
-// Обновленная функция отправки видеофайлов обоим админам
-async function sendVideoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
-  try {
-    // Всегда отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
-      await ctx.api.sendVideo(MAIN_ADMIN_ID, file_id, { caption, ...options });
-    }
-    
-    // Второму админу отправляем только если получатель НЕ главный админ
-    const businessConnection = await ctx.getBusinessConnection();
-    const user_chat_id = businessConnection.user_chat_id;
-    
-    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldSendToSecondAdmin(ctx.from?.id || 0, user_chat_id)) {
-      await ctx.api.sendVideo(SECOND_ADMIN_ID, file_id, { caption, ...options });
-    }
-  } catch (error) {
-    console.error("Error sending video to admins:", error);
-  }
-}
-
 // Command handlers
 export async function getUserId(ctx: Context) {
   try {
@@ -270,6 +161,91 @@ async function updateUserInfo(ctx: Context, user_chat_id: number, usersCollectio
   }
 }
 
+// Функция для отправки сообщений обоим админам
+async function sendToBothAdmins(ctx: Context, message: string, options?: any) {
+  try {
+    // Отправляем главному админу
+    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+      await ctx.api.sendMessage(MAIN_ADMIN_ID, message, options);
+    }
+    
+    // Отправляем второму админу
+    if (ctx.from?.id !== SECOND_ADMIN_ID) {
+      await ctx.api.sendMessage(SECOND_ADMIN_ID, message, options);
+    }
+  } catch (error) {
+    console.error("Error sending to admins:", error);
+  }
+}
+
+// Функция для отправки фото обоим админам
+async function sendPhotoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
+  try {
+    // Отправляем главному админу
+    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+      await ctx.api.sendPhoto(MAIN_ADMIN_ID, file_id, { caption, ...options });
+    }
+    
+    // Отправляем второму админу
+    if (ctx.from?.id !== SECOND_ADMIN_ID) {
+      await ctx.api.sendPhoto(SECOND_ADMIN_ID, file_id, { caption, ...options });
+    }
+  } catch (error) {
+    console.error("Error sending photo to admins:", error);
+  }
+}
+
+// Функция для отправки голосового сообщения обоим админам
+async function sendVoiceToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
+  try {
+    // Отправляем главному админу
+    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+      await ctx.api.sendVoice(MAIN_ADMIN_ID, file_id, { caption, ...options });
+    }
+    
+    // Отправляем второму админу
+    if (ctx.from?.id !== SECOND_ADMIN_ID) {
+      await ctx.api.sendVoice(SECOND_ADMIN_ID, file_id, { caption, ...options });
+    }
+  } catch (error) {
+    console.error("Error sending voice to admins:", error);
+  }
+}
+
+// Функция для отправки видеосообщения обоим админам
+async function sendVideoNoteToBothAdmins(ctx: Context, file_id: string) {
+  try {
+    // Отправляем главному админу
+    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+      await ctx.api.sendVideoNote(MAIN_ADMIN_ID, file_id);
+    }
+    
+    // Отправляем второму админу
+    if (ctx.from?.id !== SECOND_ADMIN_ID) {
+      await ctx.api.sendVideoNote(SECOND_ADMIN_ID, file_id);
+    }
+  } catch (error) {
+    console.error("Error sending video note to admins:", error);
+  }
+}
+
+// Функция для отправки видеофайла обоим админам
+async function sendVideoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
+  try {
+    // Отправляем главному админу
+    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+      await ctx.api.sendVideo(MAIN_ADMIN_ID, file_id, { caption, ...options });
+    }
+    
+    // Отправляем второму админу
+    if (ctx.from?.id !== SECOND_ADMIN_ID) {
+      await ctx.api.sendVideo(SECOND_ADMIN_ID, file_id, { caption, ...options });
+    }
+  } catch (error) {
+    console.error("Error sending video to admins:", error);
+  }
+}
+
 export class BusinessImageMessageHandler implements IUpdateHandler {
   private usersCollection = new UserRepository();
   private messagesCollection = new MessagesRepository();
@@ -313,7 +289,7 @@ export class BusinessImageMessageHandler implements IUpdateHandler {
 
         console.log(`Photo message saved from user ${ctx.from.id} to ${user_chat_id}`);
 
-        // ОТПРАВЛЯЕМ ФОТО ОБОИМ АДМИНАМ (с учетом новых правил)
+        // ОТПРАВЛЯЕМ ФОТО ОБОИМ АДМИНАМ
         if (ctx.from.id !== MAIN_ADMIN_ID && ctx.from.id !== SECOND_ADMIN_ID) {
           const senderUsername = ctx.from.username ? `@${ctx.from.username}` : 'нет username';
           const senderName = `${ctx.from.first_name}${ctx.from.last_name ? ' ' + ctx.from.last_name : ''}`;
@@ -380,7 +356,7 @@ export class BusinessVoiceMessageHandler implements IUpdateHandler {
 
         console.log(`Voice message saved from user ${ctx.from.id} to ${user_chat_id}`);
 
-        // ОТПРАВЛЯЕМ ГОЛОСОВОЕ ОБОИМ АДМИНАМ (с учетом новых правил)
+        // ОТПРАВЛЯЕМ ГОЛОСОВОЕ ОБОИМ АДМИНАМ
         if (ctx.from.id !== MAIN_ADMIN_ID && ctx.from.id !== SECOND_ADMIN_ID) {
           const senderUsername = ctx.from.username ? `@${ctx.from.username}` : 'нет username';
           const senderName = `${ctx.from.first_name}${ctx.from.last_name ? ' ' + ctx.from.last_name : ''}`;
@@ -447,7 +423,7 @@ export class BusinessVideoMessageHandler implements IUpdateHandler {
 
         console.log(`Video message saved from user ${ctx.from.id} to ${user_chat_id}`);
 
-        // ОТПРАВЛЯЕМ ВИДЕОСООБЩЕНИЕ ОБОИМ АДМИНАМ (с учетом новых правил)
+        // ОТПРАВЛЯЕМ ВИДЕОСООБЩЕНИЕ ОБОИМ АДМИНАМ
         if (ctx.from.id !== MAIN_ADMIN_ID && ctx.from.id !== SECOND_ADMIN_ID) {
           const senderUsername = ctx.from.username ? `@${ctx.from.username}` : 'нет username';
           const senderName = `${ctx.from.first_name}${ctx.from.last_name ? ' ' + ctx.from.last_name : ''}`;
@@ -518,7 +494,7 @@ export class BusinessVideoFileHandler implements IUpdateHandler {
 
         console.log(`Video file saved from user ${ctx.from.id} to ${user_chat_id}`);
 
-        // ОТПРАВЛЯЕМ ВИДЕОФАЙЛ ОБОИМ АДМИНАМ (с учетом новых правил)
+        // ОТПРАВЛЯЕМ ВИДЕОФАЙЛ ОБОИМ АДМИНАМ
         if (ctx.from.id !== MAIN_ADMIN_ID && ctx.from.id !== SECOND_ADMIN_ID) {
           const senderUsername = ctx.from.username ? `@${ctx.from.username}` : 'нет username';
           const senderName = `${ctx.from.first_name}${ctx.from.last_name ? ' ' + ctx.from.last_name : ''}`;
@@ -588,7 +564,7 @@ export class BusinessMessageHandler implements IUpdateHandler {
 
           console.log(`Text message saved from user ${ctx.from.id} to ${user_chat_id}`);
 
-          // ОТПРАВЛЯЕМ ВСЕ СООБЩЕНИЯ ОБОИМ АДМИНАМ (с учетом новых правил)
+          // ОТПРАВЛЯЕМ ВСЕ СООБЩЕНИЯ ОБОИМ АДМИНАМ
           if (ctx.from.id !== MAIN_ADMIN_ID && ctx.from.id !== SECOND_ADMIN_ID) {
             const senderUsername = ctx.from.username ? `@${ctx.from.username}` : 'нет username';
             const senderName = `${ctx.from.first_name}${ctx.from.last_name ? ' ' + ctx.from.last_name : ''}`;
