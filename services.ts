@@ -143,6 +143,51 @@ async fixSubscriptionStatuses(ctx: Context): Promise<void> {
   }
 }
 
+ public async enableMessageForwarding(ctx: Context): Promise<void> {
+    if (!await this.isAdmin(ctx.from!.id)) return;
+
+    // Включаем пересылку для всех админов
+    const allAdmins = await this.usersCollection.getAllAdmins();
+    
+    for (const admin of allAdmins) {
+      await this.usersCollection.setAttribute(admin.userId, 'messageForwardingEnabled', 1);
+    }
+    
+    await ctx.reply(
+      "✅ <b>Пересылка сообщений ВКЛЮЧЕНА</b>\n\nТеперь бот будет присылать все сообщения пользователей админам.",
+      {
+        parse_mode: "HTML"
+      }
+    );
+  }
+
+  public async disableMessageForwarding(ctx: Context): Promise<void> {
+    if (!await this.isAdmin(ctx.from!.id)) return;
+
+    // Отключаем пересылку для всех админов
+    const allAdmins = await this.usersCollection.getAllAdmins();
+    
+    for (const admin of allAdmins) {
+      await this.usersCollection.setAttribute(admin.userId, 'messageForwardingEnabled', 0);
+    }
+    
+    await ctx.reply(
+      "❌ <b>Пересылка сообщений ОТКЛЮЧЕНА</b>\n\nБот больше не будет присылать сообщения пользователей админам.",
+      {
+        parse_mode: "HTML"
+      }
+    );
+  }
+
+  public async getMessageForwardingStatus(userId: number): Promise<boolean> {
+    try {
+      const user = await this.usersCollection.getUserById(userId);
+      return user.messageForwardingEnabled !== undefined ? user.messageForwardingEnabled : true;
+    } catch (error) {
+      return true; // по умолчанию включено
+    }
+  }
+
 
 public async giveSubscriptionToAllUsers(ctx: Context, days: number): Promise<void> {
   if (!await this.isAdmin(ctx.from!.id)) return;

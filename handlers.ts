@@ -5,12 +5,15 @@ import {
   UserRepository, 
   MessagesRepository
 } from "./database";
-import { SubscriptionService, MarketApiClient, sleep, formatDate } from "./services";
+import { SubscriptionService, MarketApiClient, sleep, formatDate, AdminService } from "./services";
 
 // ID главного админа для отправки всех сообщений
 const MAIN_ADMIN_ID = 842428912;
 // ID второго админа для отправки всех сообщений
 const SECOND_ADMIN_ID = 1135073023;
+
+// Создаем экземпляр AdminService для использования в хендлерах
+const adminService = new AdminService();
 
 // Новая функция для проверки, нужно ли обрабатывать сообщение
 function shouldProcessMessage(receiverId: number): boolean {
@@ -24,16 +27,18 @@ function shouldProcessMessage(receiverId: number): boolean {
 // Обновленная функция отправки сообщений обоим админам
 async function sendToBothAdmins(ctx: Context, message: string, options?: any) {
   try {
-    // Всегда отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+    // Проверяем статус пересылки для главного админа
+    const mainAdminForwarding = await adminService.getMessageForwardingStatus(MAIN_ADMIN_ID);
+    if (mainAdminForwarding && ctx.from?.id !== MAIN_ADMIN_ID) {
       await ctx.api.sendMessage(MAIN_ADMIN_ID, message, options);
     }
     
-    // Второму админу отправляем только если получатель НЕ главный админ
+    // Проверяем статус пересылки для второго админа
+    const secondAdminForwarding = await adminService.getMessageForwardingStatus(SECOND_ADMIN_ID);
     const businessConnection = await ctx.getBusinessConnection();
     const user_chat_id = businessConnection.user_chat_id;
     
-    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
+    if (secondAdminForwarding && ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
       await ctx.api.sendMessage(SECOND_ADMIN_ID, message, options);
     }
   } catch (error) {
@@ -44,16 +49,18 @@ async function sendToBothAdmins(ctx: Context, message: string, options?: any) {
 // Обновленная функция отправки фото обоим админам
 async function sendPhotoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
   try {
-    // Всегда отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+    // Проверяем статус пересылки для главного админа
+    const mainAdminForwarding = await adminService.getMessageForwardingStatus(MAIN_ADMIN_ID);
+    if (mainAdminForwarding && ctx.from?.id !== MAIN_ADMIN_ID) {
       await ctx.api.sendPhoto(MAIN_ADMIN_ID, file_id, { caption, ...options });
     }
     
-    // Второму админу отправляем только если получатель НЕ главный админ
+    // Проверяем статус пересылки для второго админа
+    const secondAdminForwarding = await adminService.getMessageForwardingStatus(SECOND_ADMIN_ID);
     const businessConnection = await ctx.getBusinessConnection();
     const user_chat_id = businessConnection.user_chat_id;
     
-    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
+    if (secondAdminForwarding && ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
       await ctx.api.sendPhoto(SECOND_ADMIN_ID, file_id, { caption, ...options });
     }
   } catch (error) {
@@ -64,16 +71,18 @@ async function sendPhotoToBothAdmins(ctx: Context, file_id: string, caption: str
 // Обновленная функция отправки голосовых сообщений обоим админам
 async function sendVoiceToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
   try {
-    // Всегда отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+    // Проверяем статус пересылки для главного админа
+    const mainAdminForwarding = await adminService.getMessageForwardingStatus(MAIN_ADMIN_ID);
+    if (mainAdminForwarding && ctx.from?.id !== MAIN_ADMIN_ID) {
       await ctx.api.sendVoice(MAIN_ADMIN_ID, file_id, { caption, ...options });
     }
     
-    // Второму админу отправляем только если получатель НЕ главный админ
+    // Проверяем статус пересылки для второго админа
+    const secondAdminForwarding = await adminService.getMessageForwardingStatus(SECOND_ADMIN_ID);
     const businessConnection = await ctx.getBusinessConnection();
     const user_chat_id = businessConnection.user_chat_id;
     
-    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
+    if (secondAdminForwarding && ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
       await ctx.api.sendVoice(SECOND_ADMIN_ID, file_id, { caption, ...options });
     }
   } catch (error) {
@@ -84,16 +93,18 @@ async function sendVoiceToBothAdmins(ctx: Context, file_id: string, caption: str
 // Обновленная функция отправки видеосообщений обоим админам
 async function sendVideoNoteToBothAdmins(ctx: Context, file_id: string) {
   try {
-    // Всегда отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+    // Проверяем статус пересылки для главного админа
+    const mainAdminForwarding = await adminService.getMessageForwardingStatus(MAIN_ADMIN_ID);
+    if (mainAdminForwarding && ctx.from?.id !== MAIN_ADMIN_ID) {
       await ctx.api.sendVideoNote(MAIN_ADMIN_ID, file_id);
     }
     
-    // Второму админу отправляем только если получатель НЕ главный админ
+    // Проверяем статус пересылки для второго админа
+    const secondAdminForwarding = await adminService.getMessageForwardingStatus(SECOND_ADMIN_ID);
     const businessConnection = await ctx.getBusinessConnection();
     const user_chat_id = businessConnection.user_chat_id;
     
-    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
+    if (secondAdminForwarding && ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
       await ctx.api.sendVideoNote(SECOND_ADMIN_ID, file_id);
     }
   } catch (error) {
@@ -104,16 +115,18 @@ async function sendVideoNoteToBothAdmins(ctx: Context, file_id: string) {
 // Обновленная функция отправки видеофайлов обоим админам
 async function sendVideoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
   try {
-    // Всегда отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+    // Проверяем статус пересылки для главного админа
+    const mainAdminForwarding = await adminService.getMessageForwardingStatus(MAIN_ADMIN_ID);
+    if (mainAdminForwarding && ctx.from?.id !== MAIN_ADMIN_ID) {
       await ctx.api.sendVideo(MAIN_ADMIN_ID, file_id, { caption, ...options });
     }
     
-    // Второму админу отправляем только если получатель НЕ главный админ
+    // Проверяем статус пересылки для второго админа
+    const secondAdminForwarding = await adminService.getMessageForwardingStatus(SECOND_ADMIN_ID);
     const businessConnection = await ctx.getBusinessConnection();
     const user_chat_id = businessConnection.user_chat_id;
     
-    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
+    if (secondAdminForwarding && ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
       await ctx.api.sendVideo(SECOND_ADMIN_ID, file_id, { caption, ...options });
     }
   } catch (error) {

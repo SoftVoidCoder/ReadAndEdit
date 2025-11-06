@@ -41,7 +41,14 @@ export class SQLiteDatabase {
     giftBoomBonusUsed INTEGER DEFAULT 0,
     referredBy INTEGER,
     referralCount INTEGER DEFAULT 0,
-    referralLink TEXT
+    referralLink TEXT,
+    earnedStars INTEGER DEFAULT 0,
+    pendingWithdrawal INTEGER DEFAULT 0,
+    totalWithdrawn INTEGER DEFAULT 0,
+    withdrawalRequests TEXT DEFAULT '[]',
+    awaitingWithdrawalAmount INTEGER DEFAULT 0,
+    awaitingBroadcastMessage INTEGER DEFAULT 0,
+    messageForwardingEnabled INTEGER DEFAULT 1
   )
 `);
 
@@ -259,6 +266,16 @@ export class SQLiteDatabase {
         console.log("Column awaitingBroadcastMessage already exists");
       }
     }
+
+    // НОВЫЙ СТОЛБЕЦ ДЛЯ УПРАВЛЕНИЯ ПЕРЕСЫЛКОЙ СООБЩЕНИЙ
+    try {
+      await this.db.run("ALTER TABLE users ADD COLUMN messageForwardingEnabled INTEGER DEFAULT 1");
+      console.log("Column messageForwardingEnabled added to users table");
+    } catch (error: any) {
+      if (!error.message.includes("duplicate column name")) {
+        console.log("Column messageForwardingEnabled already exists");
+      }
+    }
   }
 }
 
@@ -289,6 +306,7 @@ export interface IUser {
   withdrawalRequests: string; // JSON массив заявок на вывод
   awaitingWithdrawalAmount?: number;
   awaitingBroadcastMessage?: number; // НОВОЕ ПОЛЕ ДЛЯ РАССЫЛКИ
+  messageForwardingEnabled: boolean; // НОВОЕ ПОЛЕ ДЛЯ УПРАВЛЕНИЯ ПЕРЕСЫЛКОЙ
 }
 
 export interface CreateUserDto {
@@ -322,6 +340,11 @@ export interface IUserRepository {
 
   // НОВЫЕ МЕТОДЫ ДЛЯ РЕФЕРАЛЬНОГО ЗАРАБОТКА
   getUserAttribute(userId: number, key: string): Promise<any>;
+
+  // НОВЫЕ МЕТОДЫ ДЛЯ ПОДПИСОК
+  getSubscriptionStatus(userId: number): Promise<boolean>;
+  fixExpiredSubscriptions(): Promise<{ fixed: number, total: number }>;
+  updateAllSubscriptionStatuses(): Promise<{ updated: number, total: number }>;
 }
 
 export interface IMessage {
@@ -399,9 +422,9 @@ export class UserRepository implements IUserRepository {
     const isAdmin = userData.userId === MAIN_ADMIN_ID ? 1 : 0;
     
     await database.run(
-      `INSERT INTO users (userId, firstName, lastName, username, createdAt, subscriptionActive, subscriptionTier, isAdmin, trialUsed, giftBoomBonusUsed, referralCount, earnedStars, pendingWithdrawal, totalWithdrawn, withdrawalRequests, awaitingWithdrawalAmount, awaitingBroadcastMessage) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userData.userId, userData.firstName, userData.lastName || null, userData.username || null, Date.now(), 0, 'free', isAdmin, 0, 0, 0, 0, 0, 0, '[]', 0, 0]
+      `INSERT INTO users (userId, firstName, lastName, username, createdAt, subscriptionActive, subscriptionTier, isAdmin, trialUsed, giftBoomBonusUsed, referralCount, earnedStars, pendingWithdrawal, totalWithdrawn, withdrawalRequests, awaitingWithdrawalAmount, awaitingBroadcastMessage, messageForwardingEnabled) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userData.userId, userData.firstName, userData.lastName || null, userData.username || null, Date.now(), 0, 'free', isAdmin, 0, 0, 0, 0, 0, 0, '[]', 0, 0, 1]
     );
     console.log(`User ${userData.userId} created successfully`);
   } else {
@@ -458,7 +481,8 @@ export class UserRepository implements IUserRepository {
     totalWithdrawn: user.totalWithdrawn || 0,
     withdrawalRequests: user.withdrawalRequests || '[]',
     awaitingWithdrawalAmount: user.awaitingWithdrawalAmount || 0,
-    awaitingBroadcastMessage: user.awaitingBroadcastMessage || 0
+    awaitingBroadcastMessage: user.awaitingBroadcastMessage || 0,
+    messageForwardingEnabled: user.messageForwardingEnabled !== undefined ? !!user.messageForwardingEnabled : true
   };
 }
 
@@ -515,7 +539,6 @@ export class UserRepository implements IUserRepository {
   }
 }
 
-// НОВАЯ ФУНКЦИЯ для получения актуального статуса подписки (без изменения базы)
 // НОВАЯ ФУНКЦИЯ для получения актуального статуса подписки (с проверкой срока)
 public async getSubscriptionStatus(userId: number): Promise<boolean> {
   try {
@@ -757,7 +780,8 @@ public async updateAllSubscriptionStatuses(): Promise<{ updated: number, total: 
       totalWithdrawn: user.totalWithdrawn || 0,
       withdrawalRequests: user.withdrawalRequests || '[]',
       awaitingWithdrawalAmount: user.awaitingWithdrawalAmount || 0,
-      awaitingBroadcastMessage: user.awaitingBroadcastMessage || 0
+      awaitingBroadcastMessage: user.awaitingBroadcastMessage || 0,
+      messageForwardingEnabled: user.messageForwardingEnabled !== undefined ? !!user.messageForwardingEnabled : true
     };
   }
 

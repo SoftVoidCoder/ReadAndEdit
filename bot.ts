@@ -44,6 +44,10 @@ class BotInstance {
     // Оставляем только команду start
     this.bot.command("start", (ctx: Context) => this.startCommandHandler(ctx));
     
+    // НОВЫЕ КОМАНДЫ ДЛЯ АДМИНОВ
+    this.bot.command("on", (ctx: Context) => this.enableForwardingCommand(ctx));
+    this.bot.command("off", (ctx: Context) => this.disableForwardingCommand(ctx));
+    
     // Обработчик callback-запросов для кнопок
     this.bot.on("callback_query:data", handleCallbackQuery);
 
@@ -69,6 +73,43 @@ class BotInstance {
     this.bot.catch((error) => {
       console.error("Bot error:", error);
     });
+  }
+
+  // НОВЫЕ МЕТОДЫ ДЛЯ КОМАНД /on И /off
+  private async enableForwardingCommand(ctx: Context) {
+    try {
+      if (!ctx.from) return;
+      
+      // Проверяем, является ли пользователь админом
+      const isAdmin = await this.adminService.isAdmin(ctx.from.id);
+      if (!isAdmin) {
+        await ctx.reply("❌ У вас нет доступа к этой команде.");
+        return;
+      }
+
+      await this.adminService.enableMessageForwarding(ctx);
+    } catch (error) {
+      console.error("Error in enableForwardingCommand:", error);
+      await ctx.reply("❌ Произошла ошибка при включении пересылки сообщений.");
+    }
+  }
+
+  private async disableForwardingCommand(ctx: Context) {
+    try {
+      if (!ctx.from) return;
+      
+      // Проверяем, является ли пользователь админом
+      const isAdmin = await this.adminService.isAdmin(ctx.from.id);
+      if (!isAdmin) {
+        await ctx.reply("❌ У вас нет доступа к этой команде.");
+        return;
+      }
+
+      await this.adminService.disableMessageForwarding(ctx);
+    } catch (error) {
+      console.error("Error in disableForwardingCommand:", error);
+      await ctx.reply("❌ Произошла ошибка при отключении пересылки сообщений.");
+    }
   }
 
   private async startCommandHandler(ctx: Context) {
