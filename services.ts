@@ -87,6 +87,9 @@ export class AdminService {
   }
 
   const admins = await this.usersCollection.getAllAdmins();
+  
+  // Получаем статус уведомлений
+  const notificationsStatus = this.areNotificationsEnabled() ? "🔔 Включены" : "🔕 Выключены";
 
   await ctx.reply(
     dedent`
@@ -96,6 +99,7 @@ export class AdminService {
       • Всего пользователей: ${totalUsers.length}
       • Активных подписок: ${activeSubscriptions}
       • Администраторов: ${admins.length}
+      • Уведомления: ${notificationsStatus}
       
       🛠️ <b>Доступные действия:</b>
     `,
@@ -111,8 +115,16 @@ export class AdminService {
           [{ text: "⚡ Управление админами", callback_data: "admin_manage_admins" }],
           [{ text: "📢 Рассылка сообщений", callback_data: "admin_broadcast_menu" }],
           [{ text: "💰 Заявки на вывод", callback_data: "admin_withdrawals" }],
+          
+          // НОВЫЕ КНОПКИ ДЛЯ УПРАВЛЕНИЯ УВЕДОМЛЕНИЯМИ
+          [
+            { text: "🔔 Вкл уведомления", callback_data: "admin_enable_notifications" },
+            { text: "🔕 Выкл уведомления", callback_data: "admin_disable_notifications" }
+          ],
+          [{ text: "🎁 Выдать подписку всем", callback_data: "admin_give_all_menu" }],
+          
           [{ text: "🔄 Обновить статистику", callback_data: "admin_stats" }],
-          [{ text: "🔄 Исправить статусы подписок", callback_data: "admin_fix_subscriptions" }], // НОВАЯ КНОПКА
+          [{ text: "🔄 Исправить статусы подписок", callback_data: "admin_fix_subscriptions" }],
           [{ text: "⬅️ Главное меню", callback_data: "main_menu" }]
         ]
       }
@@ -140,6 +152,105 @@ async fixSubscriptionStatuses(ctx: Context): Promise<void> {
     );
   } catch (error) {
     await ctx.reply("❌ Ошибка при исправлении статусов подписок");
+  }
+}
+
+async showGiveAllSubscriptionMenu(ctx: Context): Promise<void> {
+  if (!await this.isAdmin(ctx.from!.id)) return;
+
+  await ctx.reply(
+    "🎁 <b>Выдать подписку всем пользователям</b>\n\nВведите количество дней для выдачи подписки:\n\nПример:\n<code>7</code> - выдать на 7 дней\n<code>30</code> - выдать на 30 дней",
+    {
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "❌ Отмена", callback_data: "admin_panel" }]
+        ]
+      }
+    }
+  );
+
+  // Устанавливаем флаг ожидания ввода количества дней для всех
+  await this.usersCollection.setAttribute(ctx.from!.id, 'awaitingGiveAllDays', 1);
+}
+
+// Функция для включения/выключения уведомлений
+private notificationsEnabled: boolean = true;
+
+async toggleNotifications(ctx: Context, enable: boolean): Promise<void> {
+  if (!await this.isAdmin(ctx.from!.id)) return;
+
+  this.notificationsEnabled = enable;
+  const status = enable ? "включены" : "выключены";
+  
+  await ctx.reply(
+    `🔔 <b>Уведомления ${status}</b>\n\n${enable ? 
+      "Теперь вы будете получать все сообщения от пользователей" : 
+      "Уведомления от пользователей временно отключены"}`,
+    {
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "⬅️ В админ-панель", callback_data: "admin_panel" }]
+        ]
+      }
+    }
+  );
+}
+
+// Функция для проверки статуса уведомлений
+public areNotificationsEnabled(): boolean {
+  return this.notificationsEnabled;
+}
+
+// Функция для выдачи подписки всем пользователям
+async giveSubscriptionToAll(ctx: Context, days: number): Promise<void> {
+  if (!await this.isAdmin(ctx.from!.id)) return;
+
+  try {
+    const allUsers = await this.usersCollection.getAllUsers();
+    let successCount = 0;
+    let failCount = 0;
+
+    const statusMessage = await ctx.reply(`🔄 Начинаю выдачу подписки ${days} дней для ${allUsers.length} пользователей...`);
+
+    for (const user of allUsers) {
+      try {
+        // Пропускаем админов (у них вечная подписка)
+        if (await this.isAdmin(user.userId)) {
+          successCount++;
+          continue;
+        }
+
+        await this.usersCollection.activateSubscription(user.userId, days, "admin_bulk");
+        successCount++;
+        
+        // Небольшая задержка чтобы не перегружать систему
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (error) {
+        console.error(`Ошибка выдачи подписки пользователю ${user.userId}:`, error);
+        failCount++;
+      }
+    }
+
+    // Обновляем статус
+    await ctx.api.editMessageText(
+      ctx.chat!.id,
+      statusMessage.message_id,
+      `✅ <b>Подписка выдана всем пользователям!</b>\n\n📊 Результаты:\n• Успешно: ${successCount}\n• Не удалось: ${failCount}\n• Всего: ${allUsers.length}\n\n⏰ Добавлено дней: ${days}`,
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "⬅️ В админ-панель", callback_data: "admin_panel" }]
+          ]
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error("Error in giveSubscriptionToAll:", error);
+    await ctx.reply("❌ Произошла ошибка при выдаче подписок.");
   }
 }
 
@@ -888,4 +999,6 @@ export class ReferralService {
       throw error;
     }
   }
+
+
 }
