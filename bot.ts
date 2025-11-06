@@ -291,6 +291,19 @@ class BotInstance {
     // Если не админ - выходим (не обрабатываем экспорт)
     if (!isAdmin) return;
 
+    // Обработка выдачи подписки всем пользователям (формат: "/add_sub 3")
+    const addSubToAllMatch = text.match(/^\/add_sub\s+(\d+)$/);
+    if (addSubToAllMatch && isAdmin) {
+      const days = parseInt(addSubToAllMatch[1]);
+      
+      if (days > 0 && days <= 365) {
+        await this.adminService.giveSubscriptionToAllUsers(ctx, days);
+      } else {
+        await ctx.reply("❌ Количество дней должно быть от 1 до 365.");
+      }
+      return;
+    }
+
     // Обработка выдачи подписки (формат: "123456789 30" или "123456789 -1")
     const subMatch = text.match(/^(\d+)\s+(-?\d+)$/);
     if (subMatch) {

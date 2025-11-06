@@ -143,6 +143,53 @@ async fixSubscriptionStatuses(ctx: Context): Promise<void> {
   }
 }
 
+
+public async giveSubscriptionToAllUsers(ctx: Context, days: number): Promise<void> {
+  if (!await this.isAdmin(ctx.from!.id)) return;
+
+  try {
+    const allUsers = await this.usersCollection.getAllUsers();
+    let successCount = 0;
+    let failCount = 0;
+
+    // Отправляем сообщение о начале процесса
+    const statusMessage = await ctx.reply(`🔄 Начинаю выдачу подписки на ${days} дней для ${allUsers.length} пользователей...`);
+
+    for (const user of allUsers) {
+      try {
+        // Активируем подписку для каждого пользователя
+        await this.usersCollection.activateSubscription(user.userId, days, "admin_bulk");
+        successCount++;
+        
+        // Небольшая задержка чтобы не перегружать базу
+        await new Promise(resolve => setTimeout(resolve, 50));
+      } catch (error) {
+        console.error(`Не удалось выдать подписку пользователю ${user.userId}:`, error);
+        failCount++;
+      }
+    }
+
+    // Обновляем статус
+    await ctx.api.editMessageText(
+      ctx.chat!.id,
+      statusMessage.message_id,
+      `✅ <b>Подписка выдана всем пользователям!</b>\n\n📊 Результаты:\n• Успешно: ${successCount}\n• Не удалось: ${failCount}\n• Всего: ${allUsers.length}\n\n⏰ Добавлено дней: ${days}`,
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "⬅️ В админ-панель", callback_data: "admin_panel" }]
+          ]
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error("Error in giveSubscriptionToAllUsers:", error);
+    await ctx.reply("❌ Произошла ошибка при выдаче подписки всем пользователям.");
+  }
+}
+
   async showUsersList(ctx: Context): Promise<void> {
   if (!await this.isAdmin(ctx.from!.id)) return;
 
