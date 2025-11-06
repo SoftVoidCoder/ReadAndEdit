@@ -8,7 +8,6 @@ import * as fs from "fs";
 import { ExportService } from './exportService';
 
 // Обработчик callback-запросов для кнопок
-// Обработчик callback-запросов для кнопок
 export async function handleCallbackQuery(ctx: Context) {
   console.log(`📲 CALLBACK RECEIVED: ${ctx.callbackQuery?.data}`);
   
@@ -189,10 +188,10 @@ export async function handleCallbackQuery(ctx: Context) {
     }
 
     if (data === 'admin_fix_subscriptions') {
-      await adminService.fixSubscriptionStatuses(ctx);
-      await ctx.answerCallbackQuery();
-      return;
-    }
+    await adminService.fixSubscriptionStatuses(ctx);
+    await ctx.answerCallbackQuery();
+    return;
+  }
 
     if (data === 'buy_subscription') {
       await buySubscription(ctx);
@@ -233,25 +232,6 @@ export async function handleCallbackQuery(ctx: Context) {
     if (data === 'export_chat') {
       const exportService = new ExportService();
       await exportService.startExportProcess(ctx);
-      await ctx.answerCallbackQuery();
-      return;
-    }
-
-    // НОВЫЕ ОБРАБОТЧИКИ ДЛЯ УПРАВЛЕНИЯ УВЕДОМЛЕНИЯМИ
-    if (data === 'admin_enable_notifications') {
-      await adminService.toggleNotifications(ctx, true);
-      await ctx.answerCallbackQuery();
-      return;
-    }
-
-    if (data === 'admin_disable_notifications') {
-      await adminService.toggleNotifications(ctx, false);
-      await ctx.answerCallbackQuery();
-      return;
-    }
-
-    if (data === 'admin_give_all_menu') {
-      await adminService.showGiveAllSubscriptionMenu(ctx);
       await ctx.answerCallbackQuery();
       return;
     }
@@ -307,6 +287,10 @@ export async function handleCallbackQuery(ctx: Context) {
         await adminService.showUserInfoMenu(ctx);
       } else if (data === 'admin_manage_admins') {
         await adminService.showManageAdminsMenu(ctx);
+      } else if (data === 'admin_make_admin_menu') {
+        await adminService.showMakeAdminMenu(ctx);
+      } else if (data === 'admin_remove_admin_menu') {
+        await adminService.showRemoveAdminMenu(ctx);
       } else if (data === 'admin_broadcast_menu') {
         await adminService.showBroadcastMenu(ctx);
       } else if (data.startsWith('admin_give_')) {

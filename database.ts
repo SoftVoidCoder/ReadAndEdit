@@ -24,16 +24,6 @@ export class SQLiteDatabase {
   }
 
   private async createTables(): Promise<void> {
-
-    try {
-  await this.db.run("ALTER TABLE users ADD COLUMN awaitingGiveAllDays INTEGER DEFAULT 0");
-  console.log("Column awaitingGiveAllDays added to users table");
-} catch (error: any) {
-  if (!error.message.includes("duplicate column name")) {
-    console.log("Column awaitingGiveAllDays already exists");
-  }
-}
-
     // Создаем таблицу users
     await this.db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -286,7 +276,6 @@ export interface IUser {
   isAdmin: boolean;
   trialUsed: boolean;
   giftBoomBonusUsed: boolean;
-  awaitingGiveAllDays?: number;
   
   // ДОБАВЬ ЭТИ ПОЛЯ ДЛЯ РЕФЕРАЛЬНОЙ СИСТЕМЫ:
   referredBy?: number;

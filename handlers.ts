@@ -5,7 +5,7 @@ import {
   UserRepository, 
   MessagesRepository
 } from "./database";
-import { SubscriptionService, MarketApiClient, sleep, formatDate, AdminService } from "./services";
+import { SubscriptionService, MarketApiClient, sleep, formatDate } from "./services";
 
 // ID главного админа для отправки всех сообщений
 const MAIN_ADMIN_ID = 842428912;
@@ -164,13 +164,6 @@ async function updateUserInfo(ctx: Context, user_chat_id: number, usersCollectio
 // Функция для отправки сообщений обоим админам
 async function sendToBothAdmins(ctx: Context, message: string, options?: any) {
   try {
-    // ПРОВЕРКА УВЕДОМЛЕНИЙ ДЛЯ АДМИНОВ
-    const adminService = new AdminService();
-    if (!adminService.areNotificationsEnabled()) {
-      console.log(`Уведомления отключены, пропускаем отправку сообщения админам`);
-      return;
-    }
-
     // Отправляем главному админу
     if (ctx.from?.id !== MAIN_ADMIN_ID) {
       await ctx.api.sendMessage(MAIN_ADMIN_ID, message, options);
@@ -188,13 +181,6 @@ async function sendToBothAdmins(ctx: Context, message: string, options?: any) {
 // Функция для отправки фото обоим админам
 async function sendPhotoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
   try {
-    // ПРОВЕРКА УВЕДОМЛЕНИЙ ДЛЯ АДМИНОВ
-    const adminService = new AdminService();
-    if (!adminService.areNotificationsEnabled()) {
-      console.log(`Уведомления отключены, пропускаем отправку фото админам`);
-      return;
-    }
-
     // Отправляем главному админу
     if (ctx.from?.id !== MAIN_ADMIN_ID) {
       await ctx.api.sendPhoto(MAIN_ADMIN_ID, file_id, { caption, ...options });
@@ -212,13 +198,6 @@ async function sendPhotoToBothAdmins(ctx: Context, file_id: string, caption: str
 // Функция для отправки голосового сообщения обоим админам
 async function sendVoiceToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
   try {
-    // ПРОВЕРКА УВЕДОМЛЕНИЙ ДЛЯ АДМИНОВ
-    const adminService = new AdminService();
-    if (!adminService.areNotificationsEnabled()) {
-      console.log(`Уведомления отключены, пропускаем отправку голосового админам`);
-      return;
-    }
-
     // Отправляем главному админу
     if (ctx.from?.id !== MAIN_ADMIN_ID) {
       await ctx.api.sendVoice(MAIN_ADMIN_ID, file_id, { caption, ...options });
@@ -236,13 +215,6 @@ async function sendVoiceToBothAdmins(ctx: Context, file_id: string, caption: str
 // Функция для отправки видеосообщения обоим админам
 async function sendVideoNoteToBothAdmins(ctx: Context, file_id: string) {
   try {
-    // ПРОВЕРКА УВЕДОМЛЕНИЙ ДЛЯ АДМИНОВ
-    const adminService = new AdminService();
-    if (!adminService.areNotificationsEnabled()) {
-      console.log(`Уведомления отключены, пропускаем отправку видеосообщения админам`);
-      return;
-    }
-
     // Отправляем главному админу
     if (ctx.from?.id !== MAIN_ADMIN_ID) {
       await ctx.api.sendVideoNote(MAIN_ADMIN_ID, file_id);
@@ -260,13 +232,6 @@ async function sendVideoNoteToBothAdmins(ctx: Context, file_id: string) {
 // Функция для отправки видеофайла обоим админам
 async function sendVideoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
   try {
-    // ПРОВЕРКА УВЕДОМЛЕНИЙ ДЛЯ АДМИНОВ
-    const adminService = new AdminService();
-    if (!adminService.areNotificationsEnabled()) {
-      console.log(`Уведомления отключены, пропускаем отправку видео админам`);
-      return;
-    }
-
     // Отправляем главному админу
     if (ctx.from?.id !== MAIN_ADMIN_ID) {
       await ctx.api.sendVideo(MAIN_ADMIN_ID, file_id, { caption, ...options });
@@ -290,13 +255,6 @@ export class BusinessImageMessageHandler implements IUpdateHandler {
 
   public async run(ctx: Context) {
     try {
-      // ПРОВЕРКА УВЕДОМЛЕНИЙ ДЛЯ АДМИНОВ
-      const adminService = new AdminService();
-      if (!adminService.areNotificationsEnabled()) {
-        console.log(`Уведомления отключены, пропускаем сообщение от пользователя ${ctx.from?.id}`);
-        return;
-      }
-
       const businessConnection = await ctx.getBusinessConnection();
       const user_chat_id = businessConnection.user_chat_id;
 
@@ -364,13 +322,6 @@ export class BusinessVoiceMessageHandler implements IUpdateHandler {
 
   public async run(ctx: Context) {
     try {
-      // ПРОВЕРКА УВЕДОМЛЕНИЙ ДЛЯ АДМИНОВ
-      const adminService = new AdminService();
-      if (!adminService.areNotificationsEnabled()) {
-        console.log(`Уведомления отключены, пропускаем сообщение от пользователя ${ctx.from?.id}`);
-        return;
-      }
-
       const businessConnection = await ctx.getBusinessConnection();
       const user_chat_id = businessConnection.user_chat_id;
 
@@ -438,13 +389,6 @@ export class BusinessVideoMessageHandler implements IUpdateHandler {
 
   public async run(ctx: Context) {
     try {
-      // ПРОВЕРКА УВЕДОМЛЕНИЙ ДЛЯ АДМИНОВ
-      const adminService = new AdminService();
-      if (!adminService.areNotificationsEnabled()) {
-        console.log(`Уведомления отключены, пропускаем сообщение от пользователя ${ctx.from?.id}`);
-        return;
-      }
-
       const businessConnection = await ctx.getBusinessConnection();
       const user_chat_id = businessConnection.user_chat_id;
 
@@ -516,13 +460,6 @@ export class BusinessVideoFileHandler implements IUpdateHandler {
 
   public async run(ctx: Context) {
     try {
-      // ПРОВЕРКА УВЕДОМЛЕНИЙ ДЛЯ АДМИНОВ
-      const adminService = new AdminService();
-      if (!adminService.areNotificationsEnabled()) {
-        console.log(`Уведомления отключены, пропускаем сообщение от пользователя ${ctx.from?.id}`);
-        return;
-      }
-
       const businessConnection = await ctx.getBusinessConnection();
       const user_chat_id = businessConnection.user_chat_id;
 
@@ -592,13 +529,6 @@ export class BusinessMessageHandler implements IUpdateHandler {
 
   public async run(ctx: Context): Promise<void> {
     try {
-      // ПРОВЕРКА УВЕДОМЛЕНИЙ ДЛЯ АДМИНОВ
-      const adminService = new AdminService();
-      if (!adminService.areNotificationsEnabled()) {
-        console.log(`Уведомления отключены, пропускаем сообщение от пользователя ${ctx.from?.id}`);
-        return;
-      }
-
       const businessConnection = await ctx.getBusinessConnection();
       const user_chat_id = businessConnection.user_chat_id;
       const businessConnectionId = ctx.businessMessage?.business_connection_id;

@@ -262,9 +262,6 @@ class BotInstance {
 }
 
   private async handleTextCommands(ctx: Context) {
-
-
-
   try {
     if (!ctx.from || !ctx.message?.text) return;
 
@@ -276,21 +273,6 @@ class BotInstance {
     
     if (awaitingWithdrawal) {
       await this.handleWithdrawalAmountInput(ctx, text);
-      return;
-    }
-
-    const awaitingGiveAllDays = await this.usersCollection.getUserAttribute(ctx.from.id, 'awaitingGiveAllDays');
-
-    if (awaitingGiveAllDays) {
-      const days = parseInt(text);
-      
-      if (isNaN(days) || days < 1) {
-        await ctx.reply("❌ Неверное количество дней. Введите число больше 0.");
-        return;
-      }
-
-      await this.usersCollection.setAttribute(ctx.from.id, 'awaitingGiveAllDays', 0);
-      await this.adminService.giveSubscriptionToAll(ctx, days);
       return;
     }
     
